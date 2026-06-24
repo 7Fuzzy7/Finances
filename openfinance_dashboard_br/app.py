@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
+
+# Streamlit Cloud executa o app a partir da raiz do repositório.
+# Como este app fica dentro da pasta openfinance_dashboard_br/, garantimos
+# que os módulos locais em openfinance_dashboard_br/src sejam encontrados.
+APP_DIR = Path(__file__).resolve().parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st

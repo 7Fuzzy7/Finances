@@ -89,3 +89,17 @@ As sugestões são educativas e baseadas nas informações enviadas pelo usuári
 ## Licença
 
 MIT
+
+
+## Hotfix 2.1 — Import no Streamlit Cloud
+
+Correção aplicada para deploy em subpasta no Streamlit Cloud:
+
+- `app.py` agora adiciona a pasta do app ao `sys.path`, garantindo que `src.finance_engine` e `src.styles` sejam encontrados mesmo quando o app é executado a partir da raiz do repositório.
+- Adicionado `src/__init__.py` para deixar `src` explícito como pacote Python.
+
+No Streamlit Cloud, use:
+
+```text
+Main file path: openfinance_dashboard_br/app.py
+```
