@@ -31,6 +31,7 @@ from src.finance_engine import (
     monthly_table,
     recurring_table,
     type_summary_table,
+    detect_csv_source_type,
 )
 from src.styles import APP_CSS
 
@@ -261,6 +262,7 @@ with st.sidebar:
     st.title("💸 Finance BR")
     st.caption("Agora com primeira página de plano financeiro: saldo, reserva, limite pessoal e próximos passos.")
 
+    st.info("💡 Suba a **fatura do cartão** ou o **extrato da conta**. O app identifica automaticamente e evita dupla contagem.", icon=None)
     uploaded_files = st.file_uploader(
         "Suba um ou mais CSVs",
         type=["csv"],
@@ -335,6 +337,7 @@ else:
 if load_error:
     st.error(load_error)
 
+csv_source_type = detect_csv_source_type(raw_df) if not raw_df.empty else "desconhecido"
 quality = data_quality_report(raw_df) if not raw_df.empty else {
     "original_rows": 0, "final_rows": 0, "removed_rows": 0, "groups_adjusted": 0,
     "ignored_count": 0, "payment_count": 0, "installment_count": 0,
@@ -405,12 +408,18 @@ plano = plan_financeiro(
 
 # Data quality strip
 if quality.get("removed_rows", 0) > 0 or quality.get("payment_count", 0) > 0:
+    csv_type_label = {
+        "fatura":        "📄 Fatura de cartão detectada",
+        "extrato_conta": "🏦 Extrato de conta corrente detectado",
+        "desconhecido":  "❓ Tipo não identificado",
+    }.get(csv_source_type, "❓")
     st.markdown(
         f"""
         <div class="quality-strip">
           <b>Qualidade dos dados:</b> {quality.get('removed_rows', 0)} linha(s) duplicada(s)/conciliada(s) removida(s) •
           {quality.get('payment_count', 0)} pagamento(s) de fatura ignorado(s) •
-          {quality.get('installment_count', 0)} parcela(s) detectada(s).
+          {quality.get('installment_count', 0)} parcela(s) detectada(s) •
+          {csv_type_label}
         </div>
         """,
         unsafe_allow_html=True,
@@ -430,7 +439,8 @@ with k4:
     metric_card("Gastos/fatura analisados", format_brl(plano["gastos_analisados"]), "CSV tratado, sem pagamento de fatura")
 with k5:
     tone = "positive" if plano["saldo_livre_pos_fatura"] >= 0 else "negative"
-    metric_card("Saldo pós-fatura", format_brl(plano["saldo_livre_pos_fatura"]), "Saldo - gastos/fatura analisados", tone)
+    help_pf = "Saldo - gastos do cartão (fatura ainda a pagar)" if csv_source_type == "fatura" else "Saldo - gastos identificados no extrato"
+    metric_card("Saldo pós-gastos", format_brl(plano["saldo_livre_pos_fatura"]), help_pf, tone)
 
 st.write("")
 tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
