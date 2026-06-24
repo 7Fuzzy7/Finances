@@ -31,7 +31,6 @@ from src.finance_engine import (
     monthly_table,
     recurring_table,
     type_summary_table,
-    detect_csv_source_type,
 )
 from src.styles import APP_CSS
 
@@ -337,7 +336,11 @@ else:
 if load_error:
     st.error(load_error)
 
-csv_source_type = detect_csv_source_type(raw_df) if not raw_df.empty else "desconhecido"
+try:
+    from src.finance_engine import detect_csv_source_type as _detect_src
+    csv_source_type = _detect_src(raw_df) if not raw_df.empty else "desconhecido"
+except ImportError:
+    csv_source_type = "desconhecido"
 quality = data_quality_report(raw_df) if not raw_df.empty else {
     "original_rows": 0, "final_rows": 0, "removed_rows": 0, "groups_adjusted": 0,
     "ignored_count": 0, "payment_count": 0, "installment_count": 0,
